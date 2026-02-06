@@ -80,7 +80,6 @@ h1{
 
 <script>
 
-// YOUR SAME WEBHOOK
 const webhookURL = "https://ygtest.app.n8n.cloud/webhook-test/b091d421-2675-45ee-ba64-a23d0e60bb31";
 
 function sendEmergency(){
@@ -90,21 +89,44 @@ function sendEmergency(){
 
     btn.classList.add("alert");
     btn.innerText = "EMERGENCY";
-    status.innerText = "Gas Leak Detected!";
+    status.innerText = "Fetching location...";
 
-    fetch(webhookURL,{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-            device:"WEB_UI",
-            status:"EMERGENCY",
-            time:new Date().toISOString()
-        })
-    })
-    .then(res=>console.log("Sent"))
-    .catch(err=>console.log(err));
+    if(navigator.geolocation){
+
+        navigator.geolocation.getCurrentPosition(
+            position => {
+
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+
+                status.innerText = "Emergency Sent With Location!";
+
+                fetch(webhookURL,{
+                    method:"POST",
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+                    body:JSON.stringify({
+                        device:"WEB_UI",
+                        status:"EMERGENCY",
+                        latitude: lat,
+                        longitude: lon,
+                        time: new Date().toISOString()
+                    })
+                })
+                .then(res=>console.log("Sent with location"))
+                .catch(err=>console.log(err));
+
+            },
+            error => {
+                status.innerText = "Location permission denied!";
+                console.log(error);
+            }
+        );
+
+    } else {
+        status.innerText = "Location not supported!";
+    }
 }
 
 </script>
